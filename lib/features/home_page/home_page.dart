@@ -12,8 +12,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<String> messages = [...messageList];
   int replyMessageIndex = -1;
-  final TextEditingController _controller = TextEditingController();
 
+  final TextEditingController _controller = TextEditingController();
   final AutoScrollController _autoScrollController = AutoScrollController();
 
   Future<void> _scrollToIndex(int index) async {
@@ -21,6 +21,7 @@ class _HomePageState extends State<HomePage> {
       index,
       preferPosition: AutoScrollPosition.end,
     );
+    _autoScrollController.highlight(index);
   }
 
   void _setReplyMessageIndex(int index) {
@@ -33,6 +34,12 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       messages.add(message);
     });
+    _controller.clear();
+    _autoScrollController.animateTo(
+      _autoScrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.linear,
+    );
   }
 
   @override
@@ -63,8 +70,14 @@ class _HomePageState extends State<HomePage> {
             Column(
               children: [
                 if (replyMessageIndex != -1)
-                  _ReplyMessageWidget(
-                    message: messages[replyMessageIndex],
+                  GestureDetector(
+                    onTap: () {
+                      _scrollToIndex(replyMessageIndex);
+                    },
+                    child: _ReplyMessageWidget(
+                      message: messages[replyMessageIndex],
+                      setReplyMessageIndex: _setReplyMessageIndex,
+                    ),
                   ),
                 _TextInput(
                   controller: _controller,
@@ -137,7 +150,11 @@ class _Bubble extends StatelessWidget {
 
 class _ReplyMessageWidget extends StatelessWidget {
   final String message;
-  const _ReplyMessageWidget({required this.message});
+  final Function(int) setReplyMessageIndex;
+  const _ReplyMessageWidget({
+    required this.message,
+    required this.setReplyMessageIndex,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +198,9 @@ class _ReplyMessageWidget extends StatelessWidget {
             right: 0,
             top: 10,
             child: GestureDetector(
-              onTap: () {},
+              onTap: () {
+                setReplyMessageIndex(-1);
+              },
               child: const Icon(
                 Icons.clear,
                 color: Colors.white,
@@ -223,7 +242,7 @@ class _TextInput extends StatelessWidget {
                   controller: controller,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    hintText: "Scroll to index",
+                    hintText: "Write message...",
                     hintStyle: TextStyle(color: Colors.black54),
                     border: InputBorder.none,
                   ),
